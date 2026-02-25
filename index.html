@@ -183,6 +183,15 @@
     <p>7 języków · lokalna baza + wyszukiwanie AI</p>
   </div>
 
+  <!-- API Key -->
+  <div class="search-wrap" style="padding-bottom:0">
+    <div class="search-box" style="border-color:rgba(255,170,0,0.3)">
+      <div class="search-label" style="color:#ffcc44">🔑 Klucz API Anthropic (do wyszukiwania AI)</div>
+      <input id="api-key-input" type="password" placeholder="sk-ant-api03-..." autocomplete="off" style="width:100%;background:rgba(255,255,255,0.09);border:1px solid rgba(255,170,0,0.4);border-radius:10px;padding:10px 14px;color:#fff;font-size:14px;outline:none;" />
+      <div style="font-size:11px;color:#886600;margin-top:6px">Potrzebny tylko gdy ryby nie ma w lokalnej bazie. Klucz nie jest nigdzie wysyłany — zostaje tylko w Twojej przeglądarce.</div>
+    </div>
+  </div>
+
   <!-- Search -->
   <div class="search-wrap">
     <div class="search-box">
@@ -231,16 +240,16 @@
 
     <!-- Not found -->
     <div class="msg-card red hidden" id="state-not-found">
-      <div class="icon">🤷</div>
-      <div class="title">Nie znaleziono ryby</div>
-      <div class="sub">Sprawdź pisownię lub spróbuj innej nazwy</div>
+      <div class="icon">🔍</div>
+      <div class="title">Nie ma w bazie</div>
+      <div class="sub">Wyślij tę nazwę do nas — dodamy ją do bazy w następnej aktualizacji</div>
     </div>
 
     <!-- Error -->
     <div class="msg-card red hidden" id="state-error">
       <div class="icon">⚠️</div>
-      <div class="title">Błąd połączenia z AI</div>
-      <div class="sub">Sprawdź internet i spróbuj ponownie</div>
+      <div class="title">Nie znaleziono ryby</div>
+      <div class="sub">Sprawdź pisownię lub spróbuj innej nazwy</div>
     </div>
 
     <!-- Idle: fish list -->
@@ -254,6 +263,7 @@
 
 <script>
 const FISH_DB = [
+  // --- Ze zdjęcia (oryginalna baza) ---
   { no: "Blåkveite", fr: "Flétan noir", en: "Greenland Halibut", de: "Schwarzer Heilbutt", da: "Hellefisk", es: "Lipogloso negro", pt: "Alabote-da-Gronelândia" },
   { no: "Breiflabb", fr: "Lotte", en: "Anglerfish", de: "Seeteufel", da: "Havtaske/Bredflabb", es: "Rape", pt: "Tamboril" },
   { no: "Breiflabb m/hode", fr: "Lotte avec tête", en: "Anglerfish w/head", de: "Seeteufel m/kopf", da: "Havtaske m/hoved", es: "Rape con la pista", pt: "Tamboril com cabeça" },
@@ -292,6 +302,45 @@ const FISH_DB = [
   { no: "Vinger (Skate)", fr: "Ailes de raïée", en: "Raywings", de: "Rochen", da: "Skadevinger", es: "Alas del raya", pt: "Asas de airoga" },
   { no: "Ørret", fr: "Truite", en: "Trout", de: "Forelle", da: "Ørred", es: "Trucha", pt: "Truta" },
   { no: "Ørretfilet", fr: "Filet de truite", en: "Fillet of trout", de: "Leiste von forelle", da: "Ørredfilet", es: "Filete de trucha", pt: "Filete de truta" },
+  // --- Dodatkowe popularne gatunki ---
+  { no: "Brosme", fr: "Brosme", en: "Cusk/Tusk", de: "Lumb", da: "Brosme", es: "Brosmio", pt: "Bolota" },
+  { no: "Makrell", fr: "Maquereau", en: "Mackerel", de: "Makrele", da: "Makrel", es: "Caballa", pt: "Cavala" },
+  { no: "Makrellfilet", fr: "Filet de maquereau", en: "Fillet of mackerel", de: "Makrelenfilet", da: "Makrelfillet", es: "Filete de caballa", pt: "Filete de cavala" },
+  { no: "Reke", fr: "Crevette", en: "Shrimp/Prawn", de: "Garnele", da: "Reje", es: "Gamba", pt: "Camarão" },
+  { no: "Kongekrabbe", fr: "Crabe royal", en: "King Crab", de: "Königskrabbe", da: "Kongekrabbe", es: "Cangrejo real", pt: "Caranguejo real" },
+  { no: "Krabbe", fr: "Crabe", en: "Crab", de: "Krabbe", da: "Krabbe", es: "Cangrejo", pt: "Caranguejo" },
+  { no: "Hummer", fr: "Homard", en: "Lobster", de: "Hummer", da: "Hummer", es: "Langosta", pt: "Lagosta" },
+  { no: "Sjøtunge", fr: "Sole", en: "Sole", de: "Seezunge", da: "Tunge", es: "Lenguado", pt: "Linguado" },
+  { no: "Abbor", fr: "Perche", en: "Perch", de: "Barsch", da: "Aborre", es: "Perca", pt: "Perca" },
+  { no: "Gjedde", fr: "Brochet", en: "Pike", de: "Hecht", da: "Gedde", es: "Lucio", pt: "Lúcio" },
+  { no: "Brasme", fr: "Brème", en: "Bream", de: "Brassen", da: "Brasen", es: "Brema", pt: "Brema" },
+  { no: "Havabbor", fr: "Bar commun", en: "Sea Bass", de: "Wolfsbarsch", da: "Havbars", es: "Lubina", pt: "Robalo" },
+  { no: "Dorade", fr: "Dorade royale", en: "Sea Bream", de: "Goldbrasse", da: "Dorade", es: "Dorada", pt: "Dourada" },
+  { no: "Sardin", fr: "Sardine", en: "Sardine", de: "Sardine", da: "Sardin", es: "Sardina", pt: "Sardinha" },
+  { no: "Ansjos", fr: "Anchois", en: "Anchovy", de: "Sardelle", da: "Ansjos", es: "Anchoa", pt: "Anchova" },
+  { no: "Sverdfisk", fr: "Espadon", en: "Swordfish", de: "Schwertfisch", da: "Sværdfisk", es: "Pez espada", pt: "Espadarte" },
+  { no: "Tunfisk", fr: "Thon", en: "Tuna", de: "Thunfisch", da: "Tunfisk", es: "Atún", pt: "Atum" },
+  { no: "Blåfinnig tunfisk", fr: "Thon rouge", en: "Bluefin Tuna", de: "Blauflossenthun", da: "Blåfinnet tunfisk", es: "Atún rojo", pt: "Atum rabilho" },
+  { no: "Ål", fr: "Anguille", en: "Eel", de: "Aal", da: "Ål", es: "Anguila", pt: "Enguia" },
+  { no: "Havål", fr: "Congre", en: "Conger eel", de: "Meeraal", da: "Havål", es: "Congrio", pt: "Congro" },
+  { no: "Sprott", fr: "Sprat", en: "Sprat", de: "Sprotte", da: "Brisling", es: "Espadín", pt: "Espadilha" },
+  { no: "Lodde", fr: "Capelan", en: "Capelin", de: "Kapelan", da: "Lodde", es: "Capelán", pt: "Capelim" },
+  { no: "Seilet", fr: "Filet de lieu noir", en: "Fillet of saithe", de: "Köhlerfilet", da: "Sejfilet", es: "Filete de palero", pt: "Filete de escamudo" },
+  { no: "Torskefilet", fr: "Filet de morue", en: "Fillet of cod", de: "Kabeljaufilet", da: "Torskefilet", es: "Filete de bacalao", pt: "Filete de bacalhau" },
+  { no: "Klippfisk", fr: "Morue salée séchée", en: "Salted dried cod", de: "Klippfisch", da: "Klipfisk", es: "Bacalao salado seco", pt: "Bacalhau seco salgado" },
+  { no: "Tørrfisk", fr: "Stockfisch", en: "Stockfish", de: "Stockfisch", da: "Tørfisk", es: "Bacalao seco", pt: "Bacalhau seco" },
+  { no: "Røkt laks", fr: "Saumon fumé", en: "Smoked salmon", de: "Räucherlachs", da: "Røget laks", es: "Salmón ahumado", pt: "Salmão fumado" },
+  { no: "Sjøkreps", fr: "Langoustine", en: "Langoustine/Norway lobster", de: "Kaisergranat", da: "Jomfruhummer", es: "Cigala", pt: "Lagostim" },
+  { no: "Kamskjell", fr: "Coquille Saint-Jacques", en: "Scallop", de: "Jakobsmuschel", da: "Kammusling", es: "Vieira", pt: "Vieira" },
+  { no: "Blåskjell", fr: "Moule", en: "Mussel", de: "Miesmuschel", da: "Blåmusling", es: "Mejillón", pt: "Mexilhão" },
+  { no: "Østers", fr: "Huître", en: "Oyster", de: "Auster", da: "Østers", es: "Ostra", pt: "Ostra" },
+  { no: "Blekksprut", fr: "Calmar", en: "Squid", de: "Kalmar", da: "Blæksprutte", es: "Calamar", pt: "Lula" },
+  { no: "Akkar", fr: "Encornet", en: "Squid (Atlantic)", de: "Tintenfisch", da: "Akkar", es: "Pota", pt: "Lula atlântica" },
+  { no: "Steinkobbe", fr: "Loup atlantique tacheté", en: "Spotted wolffish", de: "Gefleckter Katfisch", da: "Plettet havkat", es: "Perro del norte manchado", pt: "Gata pintada" },
+  { no: "Havmus", fr: "Chimère", en: "Rabbitfish/Chimaera", de: "Seekatze", da: "Havmus", es: "Quimera", pt: "Quimera" },
+  { no: "Smørflyndre", fr: "Flétan du Groenland", en: "Greenland halibut", de: "Schwarzer Heilbutt", da: "Hellefisk", es: "Fletán negro", pt: "Alabote negro" },
+  { no: "Rognkjeks", fr: "Lompe", en: "Lumpfish", de: "Lumpfisch", da: "Stenbider", es: "Ciclóptero", pt: "Ciclóptero" },
+  { no: "Rognkall", fr: "Lompe mâle", en: "Lumpsucker", de: "Lumpfisch männlich", da: "Stenbider han", es: "Ciclóptero macho", pt: "Ciclóptero macho" },
 ];
 
 const LANG_LABELS = {
@@ -350,33 +399,7 @@ function showResult(fish, isAI) {
 }
 
 async function searchOnline(name) {
-  const prompt = `You are a fish naming expert for the commercial fishing industry.
-
-The user works in a fish sorting facility. They found this name on a fish box: "${name}"
-
-This could be in Norwegian, French, English, German, Danish, Spanish, or Portuguese.
-
-Identify this fish and provide its commercial/trade name in all 7 languages.
-
-Respond ONLY with valid JSON, no markdown, no explanation:
-{"found":true,"no":"...","fr":"...","en":"...","de":"...","da":"...","es":"...","pt":"..."}
-
-If you cannot identify the fish: {"found":false}`;
-
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
-      tools: [{ type: "web_search_20250305", name: "web_search" }],
-      messages: [{ role: "user", content: prompt }]
-    })
-  });
-  const data = await response.json();
-  const text = data.content.filter(b => b.type === "text").map(b => b.text).join("");
-  const clean = text.replace(/```json|```/g, "").trim();
-  return JSON.parse(clean);
+  return { found: false };
 }
 
 async function doSearch() {
