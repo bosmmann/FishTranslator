@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#005599" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="FishTranslate" />
+  <title>FishTranslate</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #081420 0%, #0c1e30 60%, #081828 100%);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #e8f4fd;
+    }
+    #app { max-width: 480px; margin: 0 auto; }
+
+    /* Header */
+    .header {
+      background: linear-gradient(90deg, #005599 0%, #0088bb 100%);
+      padding: 22px 16px 18px;
+      box-shadow: 0 4px 24px rgba(0,85,153,0.6);
+      text-align: center;
+    }
+    .header-icon { font-size: 34px; margin-bottom: 2px; }
+    .header h1 { font-size: 23px; font-weight: 800; letter-spacing: 1.5px; color: #fff; }
+    .header p { margin-top: 5px; font-size: 12px; color: rgba(255,255,255,0.75); }
+
+    /* Search box */
+    .search-wrap { padding: 18px 14px 0; }
+    .search-box {
+      background: rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 14px;
+      border: 1px solid rgba(0,136,187,0.3);
+    }
+    .search-label { font-size: 11px; color: #7ec8e3; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .search-row { display: flex; gap: 8px; }
+    #search-input {
+      flex: 1;
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(0,136,187,0.4);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+    }
+    #search-input::placeholder { color: rgba(255,255,255,0.35); }
+    .btn-search, .btn-clear {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .btn-search {
+      background: linear-gradient(135deg, #005599, #0088bb);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(0,85,153,0.5);
+    }
+    .btn-clear {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15) !important;
+      color: #aaa;
+      font-size: 16px;
+    }
+
+    /* Output */
+    .output { padding: 14px; }
+
+    /* Loading */
+    .loading-card {
+      background: rgba(255,165,0,0.07);
+      border: 1px solid rgba(255,165,0,0.25);
+      border-radius: 14px;
+      padding: 22px 16px;
+      text-align: center;
+    }
+    .loading-card .icon { font-size: 30px; margin-bottom: 10px; }
+    .loading-card .title { color: #ffcc44; font-weight: 700; font-size: 15px; }
+    .loading-card .sub { color: #886600; font-size: 12px; margin-top: 4px; }
+    .progress-bar { margin-top: 16px; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+    .progress-inner {
+      height: 100%; width: 45%;
+      background: linear-gradient(90deg, transparent, #ffcc44, transparent);
+      border-radius: 2px;
+      animation: shimmer 1.4s infinite linear;
+    }
+    @keyframes shimmer { 0%{transform:translateX(-200%)} 100%{transform:translateX(500%)} }
+
+    /* Result card */
+    .ai-badge {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px; padding: 10px 14px;
+      background: rgba(255,170,0,0.1);
+      border: 1px solid rgba(255,170,0,0.3);
+      border-radius: 10px;
+    }
+    .ai-badge-icon { font-size: 20px; }
+    .ai-badge-title { font-size: 13px; font-weight: 700; color: #ffcc44; }
+    .ai-badge-sub { font-size: 11px; color: #997700; }
+
+    .result-table {
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .result-table.db { background: rgba(0,153,204,0.08); border: 1px solid rgba(0,153,204,0.3); }
+    .result-table.ai { background: rgba(255,170,0,0.05); border: 1px solid rgba(255,170,0,0.25); }
+    .result-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 13px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .result-row:last-child { border-bottom: none; }
+    .result-row:nth-child(odd) { background: rgba(255,255,255,0.02); }
+    .result-lang { font-size: 14px; min-width: 130px; }
+    .result-lang.db { color: #7ec8e3; }
+    .result-lang.ai { color: #ccaa44; }
+    .result-name { font-size: 15px; font-weight: 600; color: #e8f4fd; text-align: right; flex: 1; }
+    .result-name.empty { color: #444; }
+
+    /* Multiple */
+    .multi-label { color: #7ec8e3; font-size: 12px; margin-bottom: 10px; }
+    .multi-item {
+      background: rgba(0,136,187,0.08);
+      border: 1px solid rgba(0,136,187,0.25);
+      border-radius: 12px;
+      padding: 13px 16px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .multi-item:active { background: rgba(0,136,187,0.18); }
+    .multi-item-name { font-weight: 700; font-size: 15px; }
+    .multi-item-sub { font-size: 12px; color: #7ec8e3; margin-top: 2px; }
+
+    /* Error / not found */
+    .msg-card {
+      border-radius: 14px;
+      padding: 20px 16px;
+      text-align: center;
+    }
+    .msg-card.red { background: rgba(255,70,70,0.08); border: 1px solid rgba(255,70,70,0.25); }
+    .msg-card .icon { font-size: 28px; margin-bottom: 8px; }
+    .msg-card .title { font-weight: 600; }
+    .msg-card.red .title { color: #ff9999; }
+    .msg-card .sub { font-size: 12px; margin-top: 4px; }
+    .msg-card.red .sub { color: #994444; }
+
+    /* Fish list */
+    .list-label { color: #7ec8e3; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; margin-top: 6px; }
+    .fish-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      padding: 11px 14px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .fish-item:active { background: rgba(255,255,255,0.07); }
+    .fish-item-name { font-weight: 600; font-size: 15px; }
+    .fish-item-en { font-size: 12px; color: #7ec8e3; margin-top: 1px; }
+    .fish-item-arrow { color: #0088bb; font-size: 20px; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon">🐟</div>
+    <h1>FishTranslate</h1>
+    <p>7 języków · lokalna baza + wyszukiwanie AI</p>
+  </div>
+
+  <!-- Search -->
+  <div class="search-wrap">
+    <div class="search-box">
+      <div class="search-label">Nazwa ryby (dowolny język)</div>
+      <div class="search-row">
+        <input id="search-input" type="text" placeholder="Torsk, Cod, Morue, Dorsch, Bacalao..." autocomplete="off" autocorrect="off" spellcheck="false" />
+        <button class="btn-search" id="btn-search" onclick="doSearch()">🔍</button>
+        <button class="btn-clear hidden" id="btn-clear" onclick="doReset()">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Output -->
+  <div class="output">
+
+    <!-- Loading -->
+    <div class="loading-card hidden" id="state-loading">
+      <div class="icon">🌊</div>
+      <div class="title">Szukam...</div>
+      <div class="sub">sprawdzam bazę i internet</div>
+      <div class="progress-bar"><div class="progress-inner"></div></div>
+    </div>
+
+    <!-- Found in DB -->
+    <div class="hidden" id="state-found">
+      <div class="result-table db" id="result-db"></div>
+    </div>
+
+    <!-- Found via AI -->
+    <div class="hidden" id="state-ai-found">
+      <div class="ai-badge">
+        <div class="ai-badge-icon">🌐</div>
+        <div>
+          <div class="ai-badge-title">Wynik z wyszukiwania AI</div>
+          <div class="ai-badge-sub">Ryby nie było w lokalnej bazie</div>
+        </div>
+      </div>
+      <div class="result-table ai" id="result-ai"></div>
+    </div>
+
+    <!-- Multiple -->
+    <div class="hidden" id="state-multiple">
+      <div class="multi-label">Kilka wyników — wybierz rybę:</div>
+      <div id="multi-list"></div>
+    </div>
+
+    <!-- Not found -->
+    <div class="msg-card red hidden" id="state-not-found">
+      <div class="icon">🤷</div>
+      <div class="title">Nie znaleziono ryby</div>
+      <div class="sub">Sprawdź pisownię lub spróbuj innej nazwy</div>
+    </div>
+
+    <!-- Error -->
+    <div class="msg-card red hidden" id="state-error">
+      <div class="icon">⚠️</div>
+      <div class="title">Błąd połączenia z AI</div>
+      <div class="sub">Sprawdź internet i spróbuj ponownie</div>
+    </div>
+
+    <!-- Idle: fish list -->
+    <div id="state-idle">
+      <div class="list-label">Lokalna baza · <span id="fish-count"></span> ryb</div>
+      <div id="fish-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const FISH_DB = [
+  { no: "Blåkveite", fr: "Flétan noir", en: "Greenland Halibut", de: "Schwarzer Heilbutt", da: "Hellefisk", es: "Lipogloso negro", pt: "Alabote-da-Gronelândia" },
+  { no: "Breiflabb", fr: "Lotte", en: "Anglerfish", de: "Seeteufel", da: "Havtaske/Bredflabb", es: "Rape", pt: "Tamboril" },
+  { no: "Breiflabb m/hode", fr: "Lotte avec tête", en: "Anglerfish w/head", de: "Seeteufel m/kopf", da: "Havtaske m/hoved", es: "Rape con la pista", pt: "Tamboril com cabeça" },
+  { no: "Breiflabbhaler", fr: "Queue de Lotte", en: "Anglerfishtails", de: "Seeteufel o/kopf", da: "Havtaskehaler", es: "Colas del rape", pt: "Cauda do Tamboril" },
+  { no: "Flyndre", fr: "Plie", en: "Plaice", de: "Butt", da: "Solla", es: "Solla", pt: "Solha" },
+  { no: "Gråsteinbit", fr: "Loup de mer", en: "Wolffish", de: "Katfisch", da: "Havkat", es: "Perro del norte, lobo", pt: "Gata" },
+  { no: "Hyse", fr: "Eglefin", en: "Haddock", de: "Schellfisch", da: "Kuller", es: "Eglefino", pt: "Arinca, Eglefim" },
+  { no: "Hyse m/hode", fr: "Eglefin avec tête", en: "Haddock w/head", de: "Schellfisch m/kopf", da: "Kuller m/hoved", es: "Eglefino con la pista", pt: "Arinca, Eglefim com cabeça" },
+  { no: "Hyse u/hode", fr: "Eglefin sans tête", en: "Haddock wo/head", de: "Schellfisch o/kopf", da: "Kuller u/hoved", es: "Eglefino sin la pista", pt: "Arinca, Eglefim sem cabeça" },
+  { no: "Hyse, sløyd", fr: "Eglefin vidé", en: "Haddock, gutted", de: "Schellfisch ausgeweidet", da: "Kuller", es: "Eglefine, destripado", pt: "Arinca, Eglefim" },
+  { no: "Hå", fr: "Requin-taupe commun", en: "Porbeagle", de: "Heringshai", da: "Sildehaj", es: "Cailón marrajo", pt: "Anequim" },
+  { no: "Håbrand", fr: "Requin-taupe commun", en: "Porbeagle", de: "Heringshai", da: "Sildehaj", es: "Cailón marrajo", pt: "Anequim" },
+  { no: "Håbrann", fr: "Requin-taupe commun", en: "Porbeagle", de: "Heringshai", da: "Sildehaj", es: "Cailón marrajo", pt: "Anequim" },
+  { no: "Kveite", fr: "Flétan d'Atlantique", en: "Atlantic halibut", de: "Heilbutt", da: "Helleflyndre", es: "Halibut, fletan", pt: "Alabote" },
+  { no: "Laks", fr: "Saumon", en: "Salmon", de: "Lachs", da: "Laks", es: "Salmón", pt: "Salmão" },
+  { no: "Laksefillet", fr: "Filet de saumon", en: "Fillet of salmon", de: "Leiste von lachs", da: "Laksefilet", es: "Filete de salmón", pt: "Filete de salmão" },
+  { no: "Lyr", fr: "Lieu Jaune", en: "Pollack", de: "Pollack", da: "Lubbe", es: "Abadejo", pt: "Badejo" },
+  { no: "Lyrfilet", fr: "Filet de Lieu jaune", en: "Fillet of Pollack", de: "Leiste von Pollack", da: "Lubefilet", es: "Abadejo", pt: "Badejo" },
+  { no: "Lysing", fr: "Merlu", en: "Hake", de: "Seehecht", da: "Kulmule", es: "Merluza", pt: "Merlúcio" },
+  { no: "Pigghå", fr: "Aiguillat cubain", en: "Picked Dogfish", de: "Dornhai", da: "Haj", es: "Galludo", pt: "Galhudo, Esquato" },
+  { no: "Piggvar", fr: "Turbot", en: "Turbot", de: "Steinbutt", da: "Pighvarre", es: "Rodaballo", pt: "Pregado" },
+  { no: "Rødspette", fr: "Carrelet (Plie)", en: "Plaice", de: "Goldbutt", da: "Rødspætte", es: "Solla", pt: "Solha" },
+  { no: "Sei", fr: "Lieu Noir", en: "Saithe/Coalfish", de: "Köhler", da: "Sej", es: "Palero", pt: "Escamudo" },
+  { no: "Sild", fr: "Hareng commun", en: "Herring", de: "Hering", da: "Sild", es: "Arenque", pt: "Arenque" },
+  { no: "Sildefilet", fr: "Filet de hareng", en: "Fillet of Herring", de: "Leiste von Hering", da: "Sildefilet", es: "Filete de arenque", pt: "Filete de arenque" },
+  { no: "Skate", fr: "Raïée", en: "Ray", de: "Rochen", da: "Skade", es: "Raya", pt: "Airaga" },
+  { no: "Steinbit", fr: "Loup de mer", en: "Wolffish", de: "Katfisch", da: "Havkat", es: "Perro del norte, lobo", pt: "Gata" },
+  { no: "Torsk", fr: "Morue/Cabbilaud", en: "Cod", de: "Dorsch", da: "Torsk", es: "Bacalao", pt: "Bacalhau" },
+  { no: "Uer", fr: "Sebasté", en: "Redfish", de: "Rotbarsch", da: "Rødfisk", es: "Callineta nórdica", pt: "Cantarilho" },
+  { no: "Uer, rund", fr: "Sebasté", en: "Redfish", de: "Rotbarsch", da: "Rødfisk", es: "Callineta nórdica", pt: "Cantarilho" },
+  { no: "Ulke", fr: "Lotte", en: "Anglerfish", de: "Seeteufel", da: "Havtaske", es: "Rape", pt: "Tamboril" },
+  { no: "Ulke m/hode", fr: "Lotte avec tête", en: "Anglerfish w/ head", de: "Seeteufel m/kopf", da: "Havtaske m/hoved", es: "Rape con la pista", pt: "Tamboril com cabeça" },
+  { no: "Ulke m/hode og lever", fr: "Lotte avec tête et foie", en: "Anglerfish w/head & liver", de: "Seetefel m/kopf & leber", da: "Havtaske m/hoved & lever", es: "Rape con la pista & higado", pt: "Tamboril com figado" },
+  { no: "Ulkehaler", fr: "Queue sw Lotte", en: "Anglerfishtails", de: "Seeteufel", da: "Havtaskehaler", es: "Colas del rape", pt: "Cauda del Tamboril" },
+  { no: "Ulkelever", fr: "Foie de Lotte", en: "Liver of anglerfish", de: "Leber von seeteufel", da: "Havtaskelever", es: "Higado del rape", pt: "Figado del tamboril" },
+  { no: "Vinger (Skate)", fr: "Ailes de raïée", en: "Raywings", de: "Rochen", da: "Skadevinger", es: "Alas del raya", pt: "Asas de airoga" },
+  { no: "Ørret", fr: "Truite", en: "Trout", de: "Forelle", da: "Ørred", es: "Trucha", pt: "Truta" },
+  { no: "Ørretfilet", fr: "Filet de truite", en: "Fillet of trout", de: "Leiste von forelle", da: "Ørredfilet", es: "Filete de trucha", pt: "Filete de truta" },
+];
+
+const LANG_LABELS = {
+  no: "🇳🇴 Norsk", fr: "🇫🇷 Français", en: "🇬🇧 English",
+  de: "🇩🇪 Deutsch", da: "🇩🇰 Dansk", es: "🇪🇸 Español", pt: "🇵🇹 Português"
+};
+const LANG_KEYS = Object.keys(LANG_LABELS);
+
+// Build fish list
+document.getElementById('fish-count').textContent = FISH_DB.length;
+const fishList = document.getElementById('fish-list');
+FISH_DB.forEach((fish, i) => {
+  const el = document.createElement('div');
+  el.className = 'fish-item';
+  el.innerHTML = `<div><div class="fish-item-name">${fish.no}</div><div class="fish-item-en">${fish.en}</div></div><span class="fish-item-arrow">›</span>`;
+  el.onclick = () => showResult(fish, false);
+  fishList.appendChild(el);
+});
+
+// Enter key
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+
+function setState(name) {
+  ['loading','found','ai-found','multiple','not-found','error','idle'].forEach(s => {
+    document.getElementById('state-' + s).classList.add('hidden');
+  });
+  document.getElementById('state-' + name).classList.remove('hidden');
+
+  const isIdle = name === 'idle';
+  document.getElementById('btn-search').classList.toggle('hidden', !isIdle);
+  document.getElementById('btn-clear').classList.toggle('hidden', isIdle);
+}
+
+function buildResultRows(fish, isAI) {
+  const type = isAI ? 'ai' : 'db';
+  return LANG_KEYS.map((lang, i) => {
+    const val = fish[lang] || '—';
+    const emptyClass = fish[lang] ? '' : ' empty';
+    return `<div class="result-row">
+      <span class="result-lang ${type}">${LANG_LABELS[lang]}</span>
+      <span class="result-name${emptyClass}">${val}</span>
+    </div>`;
+  }).join('');
+}
+
+function showResult(fish, isAI) {
+  if (isAI) {
+    document.getElementById('result-ai').innerHTML = buildResultRows(fish, true);
+    setState('ai-found');
+  } else {
+    document.getElementById('result-db').innerHTML = buildResultRows(fish, false);
+    setState('found');
+  }
+}
+
+async function searchOnline(name) {
+  const prompt = `You are a fish naming expert for the commercial fishing industry.
+
+The user works in a fish sorting facility. They found this name on a fish box: "${name}"
+
+This could be in Norwegian, French, English, German, Danish, Spanish, or Portuguese.
+
+Identify this fish and provide its commercial/trade name in all 7 languages.
+
+Respond ONLY with valid JSON, no markdown, no explanation:
+{"found":true,"no":"...","fr":"...","en":"...","de":"...","da":"...","es":"...","pt":"..."}
+
+If you cannot identify the fish: {"found":false}`;
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      tools: [{ type: "web_search_20250305", name: "web_search" }],
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  const data = await response.json();
+  const text = data.content.filter(b => b.type === "text").map(b => b.text).join("");
+  const clean = text.replace(/```json|```/g, "").trim();
+  return JSON.parse(clean);
+}
+
+async function doSearch() {
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  if (!q) return;
+
+  setState('loading');
+
+  // 1. Exact match
+  let found = null;
+  for (const fish of FISH_DB) {
+    for (const lang of LANG_KEYS) {
+      if (fish[lang] && fish[lang].toLowerCase() === q) { found = fish; break; }
+    }
+    if (found) break;
+  }
+
+  // 2. Partial match
+  if (!found) {
+    const partials = FISH_DB.filter(fish =>
+      LANG_KEYS.some(lang => fish[lang] && fish[lang].toLowerCase().includes(q))
+    );
+    if (partials.length === 1) {
+      found = partials[0];
+    } else if (partials.length > 1) {
+      const multiList = document.getElementById('multi-list');
+      multiList.innerHTML = '';
+      partials.forEach(fish => {
+        const el = document.createElement('div');
+        el.className = 'multi-item';
+        el.innerHTML = `<div class="multi-item-name">${fish.no}</div><div class="multi-item-sub">${fish.en} · ${fish.fr} · ${fish.de}</div>`;
+        el.onclick = () => showResult(fish, false);
+        multiList.appendChild(el);
+      });
+      setState('multiple');
+      return;
+    }
+  }
+
+  if (found) { showResult(found, false); return; }
+
+  // 3. AI online search
+  try {
+    const aiData = await searchOnline(document.getElementById('search-input').value.trim());
+    if (aiData && aiData.found) {
+      showResult(aiData, true);
+    } else {
+      setState('not-found');
+    }
+  } catch(e) {
+    setState('error');
+  }
+}
+
+function doReset() {
+  document.getElementById('search-input').value = '';
+  setState('idle');
+}
+</script>
+</body>
+</html>
